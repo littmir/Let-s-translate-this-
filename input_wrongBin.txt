@@ -1,0 +1,16 @@
+1BB
+1bb
+10BB
+11bb
+1Bread
+10bwrite
+1Ba
+10bz
+1B.e1
+10b.e1
+2B 2b
+02B 02b 002B 002b
+12B 12b 012B 012b
+20b 20B
+30b 40b 50b 60b 70b 80b 90b
+10b10b 10B10B
