@@ -76,22 +76,6 @@ end;
 // Конец инициализации //////////////////////////////////////////////////////////+
 
 
-
-
-// Понижение регистра ///////////////////////////////////////////////////////////+
-{function down(x: char): char;
-var
-	strin: string;
-begin
-	strin:=ansilowercase(x);
-    { if (ord(x) >= ord('A')) and (ord(x) <= ord('Z')) then
-        x := chr(ord(x) - ord('A') + ord('a'));}
-     Down := strin[1];
-end;}
-// Конец понижения регистра /////////////////////////////////////////////////////+
-
-
-
 // Чтение из входного файла /.///////////////////////////////////////////////////+
 // return false, если конец файла, tempChar = считанный символ
 // понижает регистр
@@ -246,10 +230,15 @@ begin
 	writeln('You are in a ID proc!');
 	lexValue := readWhileIn('_qwertyuiopasdfghjklzxcvbnm0123456789');
 	// Если не дошли до конца лексемы
-	if not endOfLex() then
+	//if not endOfLex() then
 		begin //----------------------------------------------------------------------------------- look at this! Возможно, нужен обрабочтчик ошибки!
 			// Чтение строки до разделителя
 			lexValue := lexValue + readToDivider(divider);
+			writeln('lex value: ', lexValue);
+			if ((lexValue = 'rem') and (pos(tempChar, chr(9) + ' ' + chr(13)) <> 0))  then
+			begin
+				writeln('You are in a COM proc!');
+			end;
 		end;
 	lexName := 'Id';
 	// если не идентификатор, а ключевые слова
@@ -389,18 +378,6 @@ begin
 	sizeOfInt := toDec(number, 10);
 	if bufNumb = 'd' then
 	begin
-		
-		{readChar();
-		if pos(tempChar, divider) = 0 then 
-		begin
-			writeln('number: ', number, ' buf: ', bufNumb, ' temp: ', tempChar);
-			isItDecimal := false;
-			//number := number + readToDivider(chr(9) + ' ' +chr(13));
-			//writeln('number: ', number);
-			//writeln('Error:', StringNumber, ':uncorrect DEC!');
-			//writeln(output, StringNumber, chr(9), 'lex:Error', chr(9), 'val:', number);
-			exit;
-		end;}
 		number := number + bufNumb;
 	end;
 		
@@ -527,13 +504,6 @@ begin
 		isItDecimal(number, tempChar);
 		exit;
 	end;
-	// Десятичная
-	{if (tempChar = 'd') or (pos(tempChar, divider) <> 0) or eof(input) then
-	//if (((tempChar = 'd') and (pos(tempChar, divider) <> 0)) or (pos(bufNumb, divider) <> 0)) or eof(input) then
-	begin
-		if eof(input) then dec(StringNumber);
-		if isItDecimal(number, tempChar) = true then exit;
-	end;}
 
 
 	bufNumb := tempChar;

@@ -1,4 +1,4 @@
-1	lex:Int	int:12	val:0ch
-1	lex:Int	int:12	val:0ch
-2	lex:Int	int:13	val:0dh
-2	lex:Int	int:13	val:0dh
+1	lex:Id	val:ftyffrem
+2	lex:Id	val:remhg
+3	lex:Id	val:rem
+3	lex:Id	val:hhkk
