@@ -79,12 +79,15 @@ end;
 
 
 // Понижение регистра ///////////////////////////////////////////////////////////+
-function down(x: char): char;
+{function down(x: char): char;
+var
+	strin: string;
 begin
-     if (ord(x) >= ord('A')) and (ord(x) <= ord('Z')) then
-        x := chr(ord(x) - ord('A') + ord('a'));
-     Down := x;
-end;
+	strin:=ansilowercase(x);
+    { if (ord(x) >= ord('A')) and (ord(x) <= ord('Z')) then
+        x := chr(ord(x) - ord('A') + ord('a'));}
+     Down := strin[1];
+end;}
 // Конец понижения регистра /////////////////////////////////////////////////////+
 
 
@@ -109,7 +112,7 @@ begin
 	read(input, tempChar);
 	writeln('Readed: ',tempChar); //------------------------------------------------------------------------------------ look at this!
 	// Понижение регистра
-	tempChar := down(tempChar);
+	tempChar := ansilowercase(tempChar)[1];
 	flagNeedToRead := true;
 	readChar := true;
 end;
@@ -214,7 +217,7 @@ end;
 procedure LexNumberOutput(lexName: string; value: string; numberValue: string);
 begin
 	write(output, StringNumber, chr(9), 'lex:', lexName);
-	lexName[1] := down(lexName[1]);
+	lexName[1] := ansilowercase(lexName[1])[1];
 	writeln(output, chr(9), lexName, ':', numberValue, chr(9), 'val:', value);
 end;
 // Конец вывода распознанной лексемы числа в файл ///////////////////////////////+
