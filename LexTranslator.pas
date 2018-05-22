@@ -378,27 +378,29 @@ begin
 end;
 
 
-procedure isItDecimal(number: string; bufNumb: char);
+function isItDecimal(number: string; bufNumb: char): boolean;
 var
 	sizeOfInt: integer;
 	size: string;
 begin
+	isItDecimal := true;
 	writeln('You are in a DEC proc!');
 
 	sizeOfInt := toDec(number, 10);
 	if bufNumb = 'd' then
 	begin
 		
-		readChar();
+		{readChar();
 		if pos(tempChar, divider) = 0 then 
 		begin
-			//writeln('number: ', number, ' buf: ', bufNumb, ' temp: ', tempChar);
+			writeln('number: ', number, ' buf: ', bufNumb, ' temp: ', tempChar);
+			isItDecimal := false;
 			//number := number + readToDivider(chr(9) + ' ' +chr(13));
 			//writeln('number: ', number);
 			//writeln('Error:', StringNumber, ':uncorrect DEC!');
 			//writeln(output, StringNumber, chr(9), 'lex:Error', chr(9), 'val:', number);
 			exit;
-		end;
+		end;}
 		number := number + bufNumb;
 	end;
 		
@@ -509,15 +511,29 @@ begin
 	writeln('You are in NUM proc!');
 	number := readWhileIn('0123456789');
 	
-
-	// Десятичная
-	if (tempChar = 'd') or (pos(tempChar, divider) <> 0) or eof(input) then
-	//if (((tempChar = 'd') and (pos(tempChar, divider) <> 0)) or (pos(bufNumb, divider) <> 0)) or eof(input) then
+	if tempChar = 'd' then
 	begin
-		if eof(input) then dec(StringNumber);
+		bufNumb := tempChar;
+		number := number + tempChar;
+		readChar();
+		if (pos(tempChar, divider) <> 0) then
+		begin
+			if eof(input) then dec(StringNumber);
+			if isItDecimal(number, tempChar) = true then exit;
+		end;
+	end;
+	if pos(tempChar, divider) <> 0 then 
+	begin 
 		isItDecimal(number, tempChar);
 		exit;
 	end;
+	// Десятичная
+	{if (tempChar = 'd') or (pos(tempChar, divider) <> 0) or eof(input) then
+	//if (((tempChar = 'd') and (pos(tempChar, divider) <> 0)) or (pos(bufNumb, divider) <> 0)) or eof(input) then
+	begin
+		if eof(input) then dec(StringNumber);
+		if isItDecimal(number, tempChar) = true then exit;
+	end;}
 
 
 	bufNumb := tempChar;
