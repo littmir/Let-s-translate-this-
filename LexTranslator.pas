@@ -1,6 +1,7 @@
 program LexTranslator;
 {
 	Let's start translate!
+	Проверка git'a
 }
 
 uses sysutils; 
