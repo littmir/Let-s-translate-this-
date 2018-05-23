@@ -1,6 +1,6 @@
+1	lex:Label	val:12:
 1	lex:Int	int:22	val:16h
-2	lex:Id	val:ftyffrem
-3	lex:Id	val:remhg
-4	lex:Comment	val:rem hhk
-5	lex:Int	int:1	val:01b
-6	lex:Comment	val:rem hh
+2	lex:Label	val:0:
+3	lex:Label	val:2:
+4	lex:Label	val:2:
+5	lex:Label	val:0:

@@ -483,6 +483,54 @@ begin
 	end;	
 end;
 
+procedure isItLabel(number: string);
+var
+	i: integer;
+	k: integer;
+	bufString: string;
+begin
+	writeln('You are in a LABEL proc!');
+	number := number + tempChar;
+	readChar();
+	// Если метка
+	if (tempChar = ' ') or (tempChar = chr(13)) or eof(input) then
+	begin
+		i := 1; k := 1; bufString := '';
+		writeln('number1: ', number);
+		// Если есть незначащие нули  0000: 0: 01: 001:
+		if number[1] = '0' then
+		begin
+			// Пропуск незначащих нулей
+			while number[i] = '0' do inc(i);
+			
+			// Если метка состоит только из нулей
+			if number[i] = ':' then
+			begin
+				writeln('Are you here?');
+				number := '0:';
+				writeln(output, StringNumber, chr(9), 'lex:Label', chr(9), 'val:', number);
+				exit;
+			end;
+			// Пропускаем незначащие нули
+			number := copy(number, i, length(number)-i+1);
+			{// Запись строки без незначащих нулей в буферную строку
+			writeln('i: ', i, ' length(number): ', length(number));
+			while i <> length(number)+1 do
+			begin
+				bufString[k] := number[i];
+				writeln('bufString[k]: ', bufString[k], ' number[i]: ', number[i]);
+				inc(k); inc(i);
+			end;
+			// Объединение строк
+			writeln('bufString: ', bufString, ' number: ', number);
+			number := bufString;
+			writeln('bufString: ', bufString, ' number: ', number);}
+		end;
+		writeln(output, StringNumber, chr(9), 'lex:Label', chr(9), 'val:', number);	
+	end;
+	// переход к обрабочтику деления
+end;
+
 
 // Распознавание числа ////////////////////////////////////////////////////////
 procedure numberFound();
@@ -495,6 +543,9 @@ begin
 	writeln('You are in NUM proc!');
 	number := readWhileIn('0123456789');
 	
+
+
+	// Десятичная
 	if tempChar = 'd' then
 	begin
 		bufNumb := tempChar;
@@ -508,6 +559,12 @@ begin
 	end;
 	if pos(tempChar, divider) <> 0 then 
 	begin 
+		// Метка
+		if tempChar = ':' then
+		begin
+			isItLabel(number);
+			exit;
+		end;
 		isItDecimal(number, tempChar);
 		exit;
 	end;
@@ -517,11 +574,8 @@ begin
 	readChar();
 	writeln('number: ', number, ' bufNumb: ', bufNumb, ' tempChar: ', tempChar);
 
-
 	
 
-
-	
 	// Двоичная
 	if ((bufNumb = 'b') and ((pos(tempChar, divider) <> 0) or eof(input))) then
 	begin
