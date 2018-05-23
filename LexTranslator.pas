@@ -15,6 +15,8 @@ var
 	tempString: string; //буферная строка
 	StringNumber: Integer; // номер строки
 	divider: string; // разделитель
+	commentOutput: boolean;
+	overflowOutput: boolean;
 
 // Инифиализация ////////////////////////////////////////////////////////////////+
 // return False при ошибке //////////////////////////////////////////////////////+
@@ -72,6 +74,8 @@ begin
 	divider := ' ' + chr(9) + chr(13) + '/*:+-;{}[],()%=!<>';
 
 	initiator  := true;
+	overflowOutput := false;
+	commentOutput := true;
 end;
 // Конец инициализации //////////////////////////////////////////////////////////+
 
@@ -237,7 +241,10 @@ begin
 			writeln('lex value: ', lexValue);
 			if ((lexValue = 'rem') and (pos(tempChar, chr(9) + ' ' + chr(13)) <> 0))  then
 			begin
-				writeln('You are in a COM proc!');
+				writeln('You are in a COM handler!');
+				lexValue := lexValue + readToDivider(chr(13));
+				if (commentOutput = true) then writeln(output, StringNumber, chr(9), 'lex:Comment', chr(9), 'val:', lexValue);
+				exit;				
 			end;
 		end;
 	lexName := 'Id';
