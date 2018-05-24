@@ -6,121 +6,100 @@ program LexTranslator;
 uses sysutils; 
 
 var
-	inputName, outputName: string; // имена входного и выходного файлов
-	input, output: text; // входной и выходный файлы
-	tempChar: Char; // буферный симовл
-	tempString: string; //буферная строка
-	StringNumber: Integer; // номер строки
-	divider: string; // разделитель
-	commentOutput: boolean;
-	overflowOutput: boolean;
+	inputName, outputName: string; // Имена входного и выходного файлов
+	input, output: text; // Входной и выходный файлы
+	tempChar: Char; // Буферный симовл
+	tempString: string; //Буферная строка
+	StringNumber: Integer; // Номер строки
+	divider: string; // Разделители
+	Error: boolean;
+	commentOutput: boolean; // Флаг вывода распознанного коментария в output
+	overflowOutput: boolean; // Флаг вывода ошибки по переполнению
 
-
-// Чтение из входного файла /.///////////////////////////////////////////////////+
-// return false, если конец файла, tempChar = считанный символ
-// понижает регистр
-function readChar(): Boolean;
+{+}function readChar(): Boolean; // Считывание одного символа в tempChar + подсчет строк + понижение регистра
 begin
-	if tempChar = chr(13) then begin inc(StringNumber);
-	writeln('String num: ', StringNumber); end;
+	if tempChar = chr(13) then 
+	begin 
+		inc(StringNumber);
+		//writeln('String num: ', StringNumber);
+	end;
 	// Если конец файла
 	if eof(input) then
 		begin
 			readChar := false;
-			writeln('End of file');
+			//writeln('End of file');
 			exit;		
 		end;
 	read(input, tempChar);
-	writeln('Readed: ',tempChar); 
+	//writeln('Readed: ',tempChar); 
 	// Понижение регистра
 	tempChar := ansilowercase(tempChar)[1];
 	readChar := true;
 end;
-// Конец чтения из входного файла //////////////////////////////////////////////+
 
-
-// Считыаание пока есть схожие символы /////////////////////////////////////////+
-// Начинает работу с проверки символа tempChar /////////////////////////////////+
-function readWhileIn(str: string): string;
+{+}function readWhileIn(str: string): string; // Считывание, пока есть схожие символы, начианется с проверки tempChar, выдает последний считанный символ
 begin
-	writeln('readWhileIn works...');
+	//writeln('readWhileIn works...');
 	readWhileIn := '';
 	while true do
-		begin
-			// Если символов нет/не осталось
-			// выход из цикла 
-			if pos(tempChar, str) = 0 then break;
-			readWhileIn := readWhileIn + tempChar;
-			// если продолжаются символы, продолжаем считывать
-			if not readChar() then break;
-		end;
+	begin
+		if pos(tempChar, str) = 0 then break;
+		readWhileIn := readWhileIn + tempChar;
+		if not readChar() then break;
+	end;
 end;
-// Конец считыаания пока есть схожие символы ///////////////////////////////////+
 
-
-// Чтение до разделителя ///////////////////////////////////////////////////////+
-// return считанную строку до разделителя //////////////////////////////////////+
-function readTo(str: string): string;
+{+}function readTo(str: string): string; // Чтения до встречи символа из строки, начианется с проверки tempChar, выдает последний считанный символ
 begin
-	writeln('readTo works...');
+	//writeln('readTo works...');
 	readTo := '';
 	while true do
-		begin
-			// Tсли достигли разделителя - возврат
-	 		if pos(tempChar, str) <> 0 then break;
-	 		// Иначе считывание продолжается
-	 		readTo := readTo + tempChar;
-	 		if not readChar() then break;
-	 	end; 
+	begin
+		if pos(tempChar, str) <> 0 then break;
+	 	readTo := readTo + tempChar;
+	 	if not readChar() then break;
+	 end; 
 end;
-// Конец чтения до разделителя /////////////////////////////////////////////////+
 
-
-
-// Вывод распознанной лексемы числа в файл /////////////..///////////////////////+
-procedure numberOutput(lexName: string; value: string; numberValue: string);
+{+}procedure numberOutput(lexName: string; value: string; numberValue: string); // Вывод лексемы числа
 begin
 	write(output, StringNumber, chr(9), 'lex:', lexName);
 	lexName[1] := ansilowercase(lexName[1])[1];
 	writeln(output, chr(9), lexName, ':', numberValue, chr(9), 'val:', value);
 end;
-// Конец вывода распознанной лексемы числа в файл ///////////////////////////////+
 
-// Вывод ошибочной лексемы //////////////////////////////////////////////////////+
-procedure ErrorLex(value: string; message: string);
-begin
-	writeln('Error:', StringNumber, ':', message);
-	// Дочитвание строки, до возврата каретки
-	readTo(chr(13));
-end;
-// Конец вывода ошибочной лексемы ///////////////////////////////////////////////+
-
-procedure idFound();
+{+}procedure idFound();
 var
 	lexName: string;
 	lexValue: string;
 begin
-	writeln('You are in a ID proc!');
+	//writeln('You are in a ID proc!');
 	lexValue := readWhileIn('_qwertyuiopasdfghjklzxcvbnm0123456789');
+	begin
+		// Если в конце id стоят недопустимые символы
+		if (pos(tempChar, ' '+chr(9)+chr(13)) = 0) and (eof(input) = false) then
 		begin
-			if (pos(tempChar, ' '+chr(9)+chr(13)) = 0) and (eof(input) = false) then
-			begin
-				lexValue := lexValue + readTo(chr(9) + ' ' +chr(13));
-				writeln(output, StringNumber, chr(9), 'lex:Error', chr(9), 'val:', lexValue);
-				exit;
-			end;
-			// Чтение строки до разделителя
-			if (eof(input) = false) then
-			lexValue := lexValue + readTo(divider);
-			writeln('lex value: ', lexValue);
-			if ((lexValue = 'rem') and (pos(tempChar, chr(9) + ' ' + chr(13)) <> 0))  then
-			begin
-				writeln('You are in a COM handler!');
-				lexValue := lexValue + readTo(chr(13));
-				if (commentOutput = true) then writeln(output, StringNumber, chr(9), 'lex:Comment', chr(9), 'val:', lexValue);
-				exit;				
-			end;
+			lexValue := lexValue + readTo(chr(9) + ' ' +chr(13));
+			Error := true;
+			writeln('Error:', StringNumber, ':uncorrect Id!');
+			writeln(output, StringNumber, chr(9), 'lex:Error', chr(9), 'val:', lexValue);
+			exit;
 		end;
+
+		// Чтение строки до разделителя
+		if (eof(input) = false) then
+		lexValue := lexValue + readTo(divider);
+		//writeln('lex value: ', lexValue);
+		
+		// Комметарий
+		if ((lexValue = 'rem') and (pos(tempChar, chr(9) + ' ' + chr(13)) <> 0))  then
+		begin
+			//writeln('You are in a COM handler!');
+			lexValue := lexValue + readTo(chr(13));
+			if (commentOutput = true) then writeln(output, StringNumber, chr(9), 'lex:Comment', chr(9), 'val:', lexValue);
+			exit;				
+		end;
+	end;
 	lexName := 'Id';
 
 	// Арифметика 
@@ -186,19 +165,20 @@ begin
 	toDec := x;
 end;
 
-procedure isItBinary(number: string);
+{+}procedure isItBinary(number: string);
 var
 	i: integer;
 	sizeOfInt: integer;
 	size: string;
 begin
-	writeln('You are in a binary proc!');
+	//writeln('You are in a binary proc!');
 	for i := 1 to length(number) do
 		begin
 			// Если в двоичном числе встретились неверные числа
 			if pos(number[i],'01') = 0 then 
 			begin
-				writeln('uncorrect binary');
+				Error := true;
+				writeln('Error:', StringNumber, ':uncorrect Binary!');
 				exit;
 			end;
 		end;
@@ -207,28 +187,33 @@ begin
     if sizeOfInt < 0 then
     begin
         // Переполнение Int
-        writeln('Error:',StringNumber,':int Overflow');
-        //errorLex(number, 'IntOverFlow - *' + number + '*');
-        exit;
+        if overflowOutput = true then
+    	begin
+    		writeln('Error:',StringNumber,':int Overflow!');
+    		Error := true;
+    	end;
+        //exit;
     end;
     str(sizeOfInt, size);
     numberOutput('Int', number, size);				 	
 end;
 
-procedure isItHex(number: string);
+{+}procedure isItHex(number: string);
 var
 	sizeOfInt: integer;
 	size: string;
 begin
-	writeln('You are in a HEX proc!');
+	//writeln('You are in a HEX proc!');
 	sizeOfInt := toDec(number, 16);
 	number := number + 'h';
     if sizeOfInt < 0 then
     begin
     	//Переполнение Int
-    	//writeln('Error:',StringNumber,':int Overflow!');
-        writeln('Int Overflow!');
-        //errorLex(number, 'IntOverFlow - *' + number + '*');
+    	if overflowOutput = true then
+    	begin
+    		writeln('Error:',StringNumber,':int Overflow!');
+    		Error := true;
+    	end;
         //exit;
     end;
     str(sizeOfInt, size);
@@ -241,13 +226,14 @@ var
 	sizeOfInt: integer;
 	size: string;
 begin
-	writeln('You are in an OCT proc!');
+	//writeln('You are in an OCT proc!');
 	for i := 1 to length(number) do
 	begin
 		// Если в восьмиричном числе встретились неверные числа
 		if pos(number[i],'01234567') = 0 then 
 		begin
 			number := number + 'c';
+			Error := true;
 			writeln('Error:',StringNumber,':uncorrect OCT!');
 			writeln(output, StringNumber, chr(9), 'lex:Error', chr(9), 'val:', number);
 			exit;
@@ -258,22 +244,25 @@ begin
     if sizeOfInt < 0 then
     begin
         // Переполнение Int
-        writeln('Error:',StringNumber,':int Overflow!');
-        //errorLex(number, 'IntOverFlow - *' + number + '*');
-        exit;
+        if overflowOutput = true then
+    	begin
+    		writeln('Error:',StringNumber,':int Overflow!');
+    		Error := true;
+    	end;
+        //exit;
     end;
     str(sizeOfInt, size);
     numberOutput('Int', number, size);		
 end;
 
 
-function isItDecimal(number: string; bufNumb: char): boolean;
+{+}function isItDecimal(number: string; bufNumb: char): boolean;
 var
 	sizeOfInt: integer;
 	size: string;
 begin
 	isItDecimal := true;
-	writeln('You are in a DEC proc!');
+	//writeln('You are in a DEC proc!');
 	sizeOfInt := toDec(number, 10);
 	
 	// Если десяичное задано через d
@@ -282,24 +271,27 @@ begin
     if sizeOfInt < 0 then
     begin
         // Переполнение Int
-        writeln('Error:',StringNumber,':int Overflow!');
-        //errorLex(number, 'IntOverFlow - *' + number + '*');
-        exit;
+        if overflowOutput = true then
+    	begin
+    		writeln('Error:',StringNumber,':int Overflow!');
+    		Error := true;
+    	end;
+       //exit;
     end;
     str(sizeOfInt, size);
     numberOutput('Int', number, size);	
 end;
 
-function isItReal(number: string; bufNumb: char): boolean; // . или e
+{+}function isItReal(number: string; bufNumb: char): boolean; // . или e
 begin
 	isItReal := true;
-	writeln('You are in a REAL proc!');
-	writeln('bufNumb: ', bufNumb);
+	//writeln('You are in a REAL proc!');
+	//writeln('bufNumb: ', bufNumb);
 	
-	 // числовая_строка порядок 
+	// числовая_строка порядок 
 	if (bufNumb = 'e') then
 	begin
-	writeln('temp: ', tempChar);
+		//writeln('temp: ', tempChar);
 		if (pos(tempChar, '0123456789+-') <> 0) then
 		begin
 			number := number + tempChar;
@@ -307,22 +299,23 @@ begin
 			if pos(tempChar,'+-') = 0 then
 			begin
 				number := number + readWhileIn('0123456789');
-				writeln('******************* number: ', number);
+				//writeln('******************* number: ', number);
 				if (pos(tempChar, divider) <> 0) or eof(input) then
 				begin
-
 					writeln(output, StringNumber, chr(9), 'lex:Real', chr(9), 'val:', number);
 					exit;
 				end;	
 			end;
+			Error := true;
 			writeln('Error:',StringNumber,':uncorrect REAL!');
 			number := number + readTo(chr(9) + ' ' +chr(13));
 			writeln(output, StringNumber, chr(9), 'lex:Error', chr(9), 'val:', number);
 			exit;
 		end;
-		writeln('Error:',StringNumber,':uncorrect REAL!');
-		isItReal := false;
-		exit;
+	Error := true;
+	writeln('Error:',StringNumber,':uncorrect REAL!');
+	isItReal := false;
+	exit;
 	end;
 
 	// числовая_строка "." числовая_строка [порядок] 
@@ -336,7 +329,7 @@ begin
 			number := number + readWhileIn('0123456789');
 			if (tempChar = 'e') then
 			begin
-			writeln('###################');
+				//writeln('###################');
 				number := number + tempChar;
 				readChar();
 				if pos(tempChar,'+-') <> 0 then
@@ -344,12 +337,12 @@ begin
 					number := number + tempChar;
 					readChar();
 					number := number + readWhileIn('0123456789');
-					writeln('num1: ', number, ' temp: ', tempChar);
+					//writeln('num1: ', number, ' temp: ', tempChar);
 				end;
 				if pos(tempChar, '0123456789') <> 0 then
 				begin
 					number := number + readWhileIn('0123456789');
-					writeln('num2: ', number);
+					//writeln('num2: ', number);
 				end;
 			end;	
 
@@ -358,30 +351,30 @@ begin
 				writeln(output, StringNumber, chr(9), 'lex:Real', chr(9), 'val:', number);
 				exit;
 			end;
+			Error := true;
 			writeln('Error:',StringNumber,':uncorrect REAL!');
-			//writeln(output, StringNumber, chr(9), 'lex:Error', chr(9), 'val:', number);
 			isItReal := false;
 			exit;
 		end;
+		Error := true;
 		writeln('Error:',StringNumber,':uncorrect REAL!');
-		//writeln(output, StringNumber, chr(9), 'lex:Error', chr(9), 'val:', number);
 		isItReal := false;
 		exit;
 	end;	
 end;
 
-procedure isItLabel(number: string);
+{+}procedure isItLabel(number: string);
 var
 	i: integer;
 begin
-	writeln('You are in a LABEL proc!');
+	//writeln('You are in a LABEL proc!');
 	number := number + tempChar;
 	readChar();
 	// Если метка и после нее есть пробел или переход на новую строку
 	if (tempChar = ' ') or (tempChar = chr(13)) or eof(input) then
 	begin
 		i := 1;
-		writeln('number1: ', number);
+		//writeln('number1: ', number);
 		// Если есть незначащие нули  0000: 0: 01: 001:
 		if number[1] = '0' then
 		begin
@@ -391,7 +384,7 @@ begin
 			// Если метка состоит только из нулей
 			if number[i] = ':' then
 			begin
-				writeln('Are you here?');
+				//writeln('Are you here?');
 				number := '0:';
 				writeln(output, StringNumber, chr(9), 'lex:Label', chr(9), 'val:', number);
 				exit;
@@ -401,24 +394,26 @@ begin
 		end;
 		writeln(output, StringNumber, chr(9), 'lex:Label', chr(9), 'val:', number);	
 	end;
-	// переход к обработчику деления
 end;
 
-procedure numberFound();
+{+}procedure numberFound();
 var
 	number: string;
 	bufNumb: char;
 begin
-	writeln('You are in NUM proc!');
+	//writeln('You are in NUM proc!');
 	number := readWhileIn('0123456789');
 	
 	if pos(tempChar, '+-/*;{}[],()=!<>') <> 0 then
 	begin
 		number := number + readTo(chr(9) + ' ' +chr(13));
+		Error := true;
 		writeln('Error:',StringNumber,':uncorrect number');
 		writeln(output, StringNumber, chr(9), 'lex:Error', chr(9), 'val:', number);
 		exit;
 	end;
+
+
 	// Десятичная
 	if tempChar = 'd' then
 	begin
@@ -446,8 +441,7 @@ begin
 
 	bufNumb := tempChar;
 	readChar();
-	writeln('number: ', number, ' bufNumb: ', bufNumb, ' tempChar: ', tempChar);
-
+	//writeln('number: ', number, ' bufNumb: ', bufNumb, ' tempChar: ', tempChar);
 	
 
 	// Двоичная
@@ -468,7 +462,7 @@ begin
 	// Шестнадцатиричное
 	if (pos(bufNumb, 'abcdef') <> 0) then
 	begin
-		writeln('You are in a HEX handler!');
+		//writeln('You are in a HEX handler!');
 		number := number + bufNumb;
 		if (pos(tempChar, 'abcdef') <> 0) then
 		begin
@@ -488,22 +482,21 @@ begin
 		if bufNumb = 'e' then
 		begin
 			if isItReal(number, bufNumb) = true then exit;
-			//for i := 1 to length(number)-1 do bufString[i] := number[i];
-			//number := bufString;
 		end;
-		writeln('number: ', number, ' buf: ', bufNumb, ' temp: ', tempChar);
+
+		Error := true;
+		//writeln('number: ', number, ' buf: ', bufNumb, ' temp: ', tempChar);
 		number := number + readTo(chr(9) + ' ' +chr(13));
-		writeln('Error:',StringNumber,':uncorrect number');
+		writeln('Error:',StringNumber,':uncorrect number!');
 		writeln(output, StringNumber, chr(9), 'lex:Error', chr(9), 'val:', number);
 		exit;
 	end;
 	if ((bufNumb = 'h') and ((pos(tempChar, divider) <> 0) or eof(input))) then 
 	begin
-		writeln('You are in a HEX handler!');
+		//writeln('You are in a HEX handler!');
 		isItHex(number);
 		exit;
 	end;
-
 
 
 	// Вещественное
@@ -514,10 +507,11 @@ begin
 	end;
 
 	// Остальное	
-	writeln('number: ', number, ' buf: ', bufNumb, ' temp: ', tempChar);
+	Error := true;
+	//writeln('number: ', number, ' buf: ', bufNumb, ' temp: ', tempChar);
 	number := number + bufNumb + readTo(chr(9) + ' ' +chr(13));
-	writeln('number: ', number);
-	writeln('Error:',StringNumber,':uncorrect number');
+	//writeln('number: ', number);
+	writeln('Error:',StringNumber,':uncorrect number!');
 	writeln(output, StringNumber, chr(9), 'lex:Error', chr(9), 'val:', number);
 end;
 
@@ -554,6 +548,7 @@ begin
 	end;
 
 	// Подготовка к началу считывания
+	Error := false;
 	StringNumber := 1;
 	overflowOutput := false;
 	commentOutput := true;
@@ -594,18 +589,20 @@ begin
 
 		 	if tempChar = '.' then
 		 	begin
-		 		writeln('You are in a DOT handler!');
+		 		//writeln('You are in a DOT handler!');
 		 		tempString := tempChar;
 		 		readChar();
 		 		if pos(tempChar, '0123456789e') <> 0 then
 		 		begin
+		 			Error := true;
 			 		tempString := tempString + readTo(chr(9) + ' ' +chr(13));
-					writeln('number: ', tempString);
-					writeln('Error:',StringNumber,':uncorrect number');
+					//writeln('number: ', tempString);
+					writeln('Error:',StringNumber,':uncorrect number!');
 					writeln(output, StringNumber, chr(9), 'lex:Error', chr(9), 'val:', tempString);
 				end;
 			end;
 		 end;
 
-close(input); close(output);
+	if Error = false then writeln('OK');
+	close(input); close(output);
 end.
