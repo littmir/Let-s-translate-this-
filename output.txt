@@ -1,15 +1,4 @@
-1	lex:Error	val:a:
-2	lex:Label	val:16:
-3	lex:Colon	val::
-3	lex:Colon	val::
-4	lex:Error	val:15+14
-5	lex:Int	int:15	val:15
-6	lex:Error	val:15+
-7	lex:RRB	val:)
-7	lex:RRB	val:)
-8	lex:Error	val:a+
-9	lex:RRB	val:)
-9	lex:RRB	val:)
-10	lex:Id	val:hello
-11	lex:Id	val:i
-12	lex:Id	val:privet
+1	lex:Int	int:15	val:15
+2	lex:Int	int:12	val:12
+3	lex:Id	val:hello
+4	lex:Int	int:12	val:12

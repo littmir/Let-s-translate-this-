@@ -283,25 +283,70 @@ begin
 end;
 
 {+}function isItReal(number: string; bufNumb: char): boolean; // . или e
+var
+	i: Integer;
+	beforeDotString: string;
+	afterDotString: string;
+	expNumber: string;
+	notE: boolean;
+	notSign: boolean;
 begin
 	isItReal := true;
+	notE := true;
+	notSign := true;
 	//writeln('You are in a REAL proc!');
 	//writeln('bufNumb: ', bufNumb);
 	
 	// числовая_строка порядок 
 	if (bufNumb = 'e') then
 	begin
-		//writeln('temp: ', tempChar);
+						// Если после е нет символов
+								//writeln('temp: ', tempChar);
+				if (pos(tempChar, divider) <> 0) and eof(input) then
+				begin
+				//writeln('!!!!!!!!!', number);
+					Error := true;
+					writeln('Error:',StringNumber,':uncorrect REAL!');
+					writeln(output, StringNumber, chr(9), 'lex:Error', chr(9), 'val:', number);
+					exit;
+				end;		
+
 		if (pos(tempChar, '0123456789+-') <> 0) then
 		begin
-			number := number + tempChar;
-			readChar();
+			//number := number + tempChar;
+			//readChar();
 			if pos(tempChar,'+-') = 0 then
 			begin
 				number := number + readWhileIn('0123456789');
 				//writeln('******************* number: ', number);
 				if (pos(tempChar, divider) <> 0) or eof(input) then
 				begin
+
+					// Если число вида xex, переводим в экспоненциальную
+					for i := 1 to length(number) do
+					begin
+						if number[i] = 'e' then 
+						begin
+							beforeDotString := copy(number, 1, i-1);
+							afterDotString := copy(number, i+1, length(number)-i+1);
+
+							// Если до e один знак, то его и сохраняем
+							if length(beforeDotString) = 1 then
+							begin
+								expNumber := beforeDotString + 'e+' + afterDotString;
+								writeln(output, StringNumber, chr(9), 'lex:Real', chr(9), 'real:', expNumber, chr(9), 'val:', number);
+								exit;
+							end;
+							// Если до e больше знаков
+							beforeDotString := copy(beforeDotString, 2, length(beforeDotString)-1);
+							expNumber := number[1] + '.' + beforeDotString + 'e+';
+							expNumber :=  expNumber + inttostr(length(beforeDotString)+strtoint(afterDotString));
+							writeln(output, StringNumber, chr(9), 'lex:Real', chr(9), 'real:', expNumber, chr(9), 'val:', number);
+							exit;
+
+						end;
+					end;
+
 					writeln(output, StringNumber, chr(9), 'lex:Real', chr(9), 'val:', number);
 					exit;
 				end;	
@@ -312,10 +357,10 @@ begin
 			writeln(output, StringNumber, chr(9), 'lex:Error', chr(9), 'val:', number);
 			exit;
 		end;
-	Error := true;
-	writeln('Error:',StringNumber,':uncorrect REAL!');
-	isItReal := false;
-	exit;
+		Error := true;
+		writeln('Error:',StringNumber,':uncorrect REAL!');
+		isItReal := false;
+		exit;
 	end;
 
 	// числовая_строка "." числовая_строка [порядок] 
@@ -324,16 +369,31 @@ begin
 		number := number + bufNumb;
 		if (pos(tempChar, '0123456789') <> 0) then
 		begin
-			number := number + tempChar;
-			readChar();
+			//number := number + tempChar;
+			//readChar();
 			number := number + readWhileIn('0123456789');
+							//writeln('number: ', number);
 			if (tempChar = 'e') then
 			begin
+				notE := false;
 				//writeln('###################');
 				number := number + tempChar;
 				readChar();
+
+				
+				// Если после е нет символов
+				if (pos(tempChar, divider) <> 0) or eof(input) then
+				begin
+					Error := true;
+					writeln('Error:',StringNumber,':uncorrect REAL!');
+					writeln(output, StringNumber, chr(9), 'lex:Error', chr(9), 'val:', number);
+					exit;
+				end;
+
+				// Если число типа x.xex
 				if pos(tempChar,'+-') <> 0 then
 				begin
+					notSign := false;
 					number := number + tempChar;
 					readChar();
 					number := number + readWhileIn('0123456789');
@@ -342,13 +402,62 @@ begin
 				if pos(tempChar, '0123456789') <> 0 then
 				begin
 					number := number + readWhileIn('0123456789');
-					//writeln('num2: ', number);
+
+					// Если число типа x.xex переводим в экспоненциальный
+					if notSign = true then
+					begin
+						for i := 1 to length(number) do
+						begin
+							if number[i] = 'e' then 
+							begin
+								beforeDotString := copy(number, 1, i-1);
+								afterDotString := copy(number, i+1, length(number)-i+1);
+								expNumber := beforeDotString + 'e+' + afterDotString;
+
+								writeln(output, StringNumber, chr(9), 'lex:Real', chr(9), 'real:', expNumber, chr(9), 'val:', number);
+								exit;
+							end;
+						end;
+					end;
+
+
 				end;
 			end;	
 
-			if pos(tempChar, divider) <> 0 then
+			if (pos(tempChar, divider) <> 0) or eof(input) then
 			begin
-				writeln(output, StringNumber, chr(9), 'lex:Real', chr(9), 'val:', number);
+				if notE = true then
+				begin
+					//	Если число вида x.x - преобразуем в экпоненциальную
+					for i := 1 to length(number) do
+					begin
+						if number[i] = '.' then 
+						begin
+							beforeDotString := copy(number, 1, i-1);
+							afterDotString := copy(number, i+1, length(number)-i+1);
+
+							// Если до точки один знак, то его и сохраняем
+							if length(beforeDotString) = 1 then
+							begin
+								expNumber := beforeDotString + '.' + afterDotString + 'e+0';
+								writeln(output, StringNumber, chr(9), 'lex:Real', chr(9), 'real:', expNumber, chr(9), 'val:', number);
+								exit;
+							end;
+							// Если до точки больше знаков
+							beforeDotString := copy(beforeDotString, 2, length(beforeDotString)-1);
+							afterDotString := beforeDotString + afterDotString;
+							expNumber := number[1] + '.' + afterDotString + 'e+';
+							expNumber :=  expNumber + inttostr(length(beforeDotString));
+
+							writeln(output, StringNumber, chr(9), 'lex:Real', chr(9), 'real:', expNumber, chr(9), 'val:', number);
+							exit;
+
+
+						end;
+					end;
+				end;
+				
+				writeln(output, StringNumber, chr(9), 'lex:Real', chr(9), 'real:', number, chr(9), 'val:', number);
 				exit;
 			end;
 			Error := true;
@@ -384,7 +493,6 @@ begin
 			// Если метка состоит только из нулей
 			if number[i] = ':' then
 			begin
-				//writeln('Are you here?');
 				number := '0:';
 				writeln(output, StringNumber, chr(9), 'lex:Label', chr(9), 'val:', number);
 				exit;
@@ -505,6 +613,7 @@ begin
 		// if buf = e then number := number + bufNumb - в шестнадцатиричной части
 		if isItReal(number, bufNumb) = true then exit;
 	end;
+	if eof(input) then begin isItDecimal(number, tempChar); exit; end;
 
 	// Остальное	
 	Error := true;
@@ -560,9 +669,9 @@ begin
 		begin
 			// Считать 1 символ 
 		 	if not readChar() then break;
-
+		 	//writeln('new step');
 		 	// Пропуск пустых символов в начале строки
-		 	readWhileIn(' ' + chr(13) + chr(10) + chr (9));
+		 	readWhileIn(' ' + chr(13) + chr(10) + chr(9));
 		 	tempString := '';
 
 		 	// Если начало идентификатора или метки
@@ -575,6 +684,7 @@ begin
 		 	if pos(tempChar,'0123456789') <> 0 then
 		 		begin
 		 			numberFound();
+		 			//writeln('!!!!!');
 		 		end;
 
 		 	if tempChar = ':' then begin writeln(output, StringNumber, chr(9), 'lex:Colon', chr(9), 'val:', tempChar); continue; end;
