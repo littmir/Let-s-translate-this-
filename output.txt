@@ -1,2 +1,2 @@
-1	lex:Error	val:11e11e11
-2	lex:Error	val:1e--1
+1	lex:Error	val:1ee1
+2	lex:Real	real:1e+2	val:1e2

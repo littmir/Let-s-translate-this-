@@ -78,7 +78,7 @@ begin
 	lexValue := readWhileIn('_qwertyuiopasdfghjklzxcvbnm0123456789');
 	begin
 		// Если в конце id стоят недопустимые символы
-		if (pos(tempChar, ' '+chr(9)+chr(13)) = 0) and (eof(input) = false) then
+		if (pos(tempChar, ' '+chr(9)+chr(13)+':'+'[') = 0) and (eof(input) = false) then
 		begin
 			lexValue := lexValue + readTo(chr(9) + ' ' +chr(13));
 			Error := true;
@@ -297,8 +297,19 @@ begin
 	isItReal := true;
 	notE := true;
 	notSign := true;
-	writeln('You are in a REAL proc!');
-	//writeln('bufNumb: ', bufNumb);
+	code := 0;
+	//writeln('You are in a REAL proc!');
+	
+	// Если занесло число с несколькими e - ошибка
+	for i := 1 to length(number) do if number[i] = 'e' then inc(code);
+	if code > 1 then
+	begin
+		number := number + readTo(divider);
+		Error := true;
+		writeln('Error:',StringNumber,':uncorrect REAL!');
+		writeln(output, StringNumber, chr(9), 'lex:Error', chr(9), 'val:', number);
+		exit;
+	end;
 	
 	// числовая_строка порядок 
 	if (bufNumb = 'e') then
@@ -311,13 +322,12 @@ begin
 					writeln(output, StringNumber, chr(9), 'lex:Error', chr(9), 'val:', number);
 					exit;
 				end;		
-
 		if (pos(tempChar, '0123456789+-') <> 0) then
 		begin
 			// Если символ не + и не -
 			if pos(tempChar,'+-') = 0 then
 			begin
-				number := number + readWhileIn('0123456789');
+				number := number + readWhileIn('012345	6789');
 				// Если считали число до разделителя
 				if (pos(tempChar, divider) <> 0) or eof(input) then
 				begin
@@ -397,15 +407,11 @@ begin
 							if length(beforeDotString) = 1 then
 							begin
 								expNumber := beforeDotString + 'e' + afterDotString;
-								writeln('Are you here 1? ', number);
 								try 
 									val(number, toRealString, code);
 									except
 									Error := true;
-									writeln('Are you here 2?');
-									writeln('Error:',StringNumber,':REAL overflow!');
 								end;
-								writeln('Are you here 3? ', toRealString);
 								writeln(output, StringNumber, chr(9), 'lex:Real', chr(9), 'real:', expNumber, chr(9), 'val:', number);
 								exit;
 							end;
@@ -607,6 +613,13 @@ begin
 	//writeln('You are in NUM proc!');
 	number := readWhileIn('0123456789');
 	
+	// Для описания
+	if tempChar = ']' then
+	begin
+		isItDecimal(number, tempChar);
+		exit;
+	end;
+
 	if pos(tempChar, '+-/*;{}[],()=!<>') <> 0 then
 	begin
 		number := number + readTo(chr(9) + ' ' +chr(13));
@@ -779,7 +792,6 @@ begin
 		 	if pos(tempChar,'0123456789') <> 0 then
 		 		begin
 		 			numberFound();
-		 			//writeln('!!!!!');
 		 		end;
 
 		 	if tempChar = ':' then begin writeln(output, StringNumber, chr(9), 'lex:Colon', chr(9), 'val:', tempChar); continue; end;
@@ -801,7 +813,6 @@ begin
 		 		begin
 		 			Error := true;
 			 		tempString := tempString + readTo(chr(9) + ' ' +chr(13));
-					//writeln('number: ', tempString);
 					writeln('Error:',StringNumber,':uncorrect number!');
 					writeln(output, StringNumber, chr(9), 'lex:Error', chr(9), 'val:', tempString);
 				end;
