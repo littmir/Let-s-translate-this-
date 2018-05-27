@@ -1,4 +1,2 @@
-1	lex:Int	int:15	val:15
-2	lex:Int	int:12	val:12
-3	lex:Id	val:hello
-4	lex:Int	int:12	val:12
+1	lex:Error	val:11e11e11
+2	lex:Error	val:1e--1

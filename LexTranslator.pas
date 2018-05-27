@@ -1,3 +1,4 @@
+{$MODE OBJFPC}
 program LexTranslator;
 {
 	Let's start translate!
@@ -285,6 +286,8 @@ end;
 {+}function isItReal(number: string; bufNumb: char): boolean; // . или e
 var
 	i: Integer;
+	code: Integer; // Код ошибки при переполнении
+	toRealString: real; // Строка переведенна в вещественное число
 	beforeDotString: string;
 	afterDotString: string;
 	expNumber: string;
@@ -294,17 +297,15 @@ begin
 	isItReal := true;
 	notE := true;
 	notSign := true;
-	//writeln('You are in a REAL proc!');
+	writeln('You are in a REAL proc!');
 	//writeln('bufNumb: ', bufNumb);
 	
 	// числовая_строка порядок 
 	if (bufNumb = 'e') then
 	begin
-						// Если после е нет символов
-								//writeln('temp: ', tempChar);
+				// Если после е нет символов
 				if (pos(tempChar, divider) <> 0) and eof(input) then
 				begin
-				//writeln('!!!!!!!!!', number);
 					Error := true;
 					writeln('Error:',StringNumber,':uncorrect REAL!');
 					writeln(output, StringNumber, chr(9), 'lex:Error', chr(9), 'val:', number);
@@ -313,15 +314,13 @@ begin
 
 		if (pos(tempChar, '0123456789+-') <> 0) then
 		begin
-			//number := number + tempChar;
-			//readChar();
+			// Если символ не + и не -
 			if pos(tempChar,'+-') = 0 then
 			begin
 				number := number + readWhileIn('0123456789');
-				//writeln('******************* number: ', number);
+				// Если считали число до разделителя
 				if (pos(tempChar, divider) <> 0) or eof(input) then
 				begin
-
 					// Если число вида xex, переводим в экспоненциальную
 					for i := 1 to length(number) do
 					begin
@@ -334,23 +333,101 @@ begin
 							if length(beforeDotString) = 1 then
 							begin
 								expNumber := beforeDotString + 'e+' + afterDotString;
+								try 
+									
+									val(number, toRealString, code);
+									except
+									Error := true;
+									writeln('Error:',StringNumber,':REAL overflow!');
+								end;
 								writeln(output, StringNumber, chr(9), 'lex:Real', chr(9), 'real:', expNumber, chr(9), 'val:', number);
 								exit;
 							end;
+
 							// Если до e больше знаков
 							beforeDotString := copy(beforeDotString, 2, length(beforeDotString)-1);
 							expNumber := number[1] + '.' + beforeDotString + 'e+';
 							expNumber :=  expNumber + inttostr(length(beforeDotString)+strtoint(afterDotString));
+							try 
+								
+								val(number, toRealString, code);
+								except
+								Error := true;
+								writeln('Error:',StringNumber,':REAL overflow!');
+							end;
 							writeln(output, StringNumber, chr(9), 'lex:Real', chr(9), 'real:', expNumber, chr(9), 'val:', number);
 							exit;
 
 						end;
 					end;
-
+					try 
+						
+						val(number, toRealString, code);
+						except
+						Error := true;
+						writeln('Error:',StringNumber,':REAL overflow!');
+					end;
 					writeln(output, StringNumber, chr(9), 'lex:Real', chr(9), 'val:', number);
 					exit;
-				end;	
+				end;
+
+
+				// Не равен разделителю - ошибка
+				Error := true;
+				writeln('Error:',StringNumber,':uncorrect REAL!');
+				number := number + readTo(chr(9) + ' ' +chr(13));
+				writeln(output, StringNumber, chr(9), 'lex:Error', chr(9), 'val:', number);
+				exit;	
 			end;
+
+			// Если символ был + или -
+			number := number + tempChar;
+			readChar();
+			number := number + readWhileIn('0123456789');
+			if (pos(tempChar, divider) <> 0) or eof(input) then
+			begin
+				for i := 1 to length(number) do
+				begin
+					if number[i] = 'e' then 
+					begin
+						beforeDotString := copy(number, 1, i-1);
+						afterDotString := copy(number, i+1, length(number)-i+1);
+
+							// Если до e один знак, то его и сохраняем
+							if length(beforeDotString) = 1 then
+							begin
+								expNumber := beforeDotString + 'e' + afterDotString;
+								writeln('Are you here 1? ', number);
+								try 
+									val(number, toRealString, code);
+									except
+									Error := true;
+									writeln('Are you here 2?');
+									writeln('Error:',StringNumber,':REAL overflow!');
+								end;
+								writeln('Are you here 3? ', toRealString);
+								writeln(output, StringNumber, chr(9), 'lex:Real', chr(9), 'real:', expNumber, chr(9), 'val:', number);
+								exit;
+							end;
+
+							// Если до e больше знаков
+							beforeDotString := copy(beforeDotString, 2, length(beforeDotString)-1);
+							expNumber := number[1] + '.' + beforeDotString + 'e';
+							expNumber :=  expNumber + inttostr(length(beforeDotString)+strtoint(afterDotString));
+							try 
+								
+								val(number, toRealString, code);
+								except
+								Error := true;
+								writeln('Error:',StringNumber,':REAL overflow!');
+							end;
+							writeln(output, StringNumber, chr(9), 'lex:Real', chr(9), 'real:', expNumber, chr(9), 'val:', number);
+							exit;
+
+						end;
+					end;
+			end;
+
 			Error := true;
 			writeln('Error:',StringNumber,':uncorrect REAL!');
 			number := number + readTo(chr(9) + ' ' +chr(13));
@@ -369,14 +446,10 @@ begin
 		number := number + bufNumb;
 		if (pos(tempChar, '0123456789') <> 0) then
 		begin
-			//number := number + tempChar;
-			//readChar();
 			number := number + readWhileIn('0123456789');
-							//writeln('number: ', number);
 			if (tempChar = 'e') then
 			begin
 				notE := false;
-				//writeln('###################');
 				number := number + tempChar;
 				readChar();
 
@@ -397,7 +470,6 @@ begin
 					number := number + tempChar;
 					readChar();
 					number := number + readWhileIn('0123456789');
-					//writeln('num1: ', number, ' temp: ', tempChar);
 				end;
 				if pos(tempChar, '0123456789') <> 0 then
 				begin
@@ -413,7 +485,13 @@ begin
 								beforeDotString := copy(number, 1, i-1);
 								afterDotString := copy(number, i+1, length(number)-i+1);
 								expNumber := beforeDotString + 'e+' + afterDotString;
-
+								try 
+									
+									val(number, toRealString, code);
+									except
+									Error := true;
+									writeln('Error:',StringNumber,':REAL overflow!');
+								end;
 								writeln(output, StringNumber, chr(9), 'lex:Real', chr(9), 'real:', expNumber, chr(9), 'val:', number);
 								exit;
 							end;
@@ -440,6 +518,12 @@ begin
 							if length(beforeDotString) = 1 then
 							begin
 								expNumber := beforeDotString + '.' + afterDotString + 'e+0';
+								try 
+									val(number, toRealString, code);
+									except
+									Error := true;
+									writeln('Error:',StringNumber,':REAL overflow!');
+								end;
 								writeln(output, StringNumber, chr(9), 'lex:Real', chr(9), 'real:', expNumber, chr(9), 'val:', number);
 								exit;
 							end;
@@ -448,7 +532,12 @@ begin
 							afterDotString := beforeDotString + afterDotString;
 							expNumber := number[1] + '.' + afterDotString + 'e+';
 							expNumber :=  expNumber + inttostr(length(beforeDotString));
-
+							try 
+								val(number, toRealString, code);
+								except
+								Error := true;
+								writeln('Error:',StringNumber,':REAL overflow!');
+							end;
 							writeln(output, StringNumber, chr(9), 'lex:Real', chr(9), 'real:', expNumber, chr(9), 'val:', number);
 							exit;
 
@@ -456,7 +545,13 @@ begin
 						end;
 					end;
 				end;
-				
+				try 
+					
+					val(number, toRealString, code);
+					except
+					Error := true;
+					writeln('Error:',StringNumber,':REAL overflow!');
+				end;
 				writeln(output, StringNumber, chr(9), 'lex:Real', chr(9), 'real:', number, chr(9), 'val:', number);
 				exit;
 			end;
